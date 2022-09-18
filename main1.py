@@ -1,4 +1,8 @@
 # ライブラリの設定
+import os
+import sys
+
+import selenium
 from selenium import webdriver
 from time import sleep
 from selenium.webdriver.common.keys import Keys
@@ -7,6 +11,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, ElementNotInteractableException
 import pandas as pd
 import tqdm
+import bs4
 from bs4 import BeautifulSoup
 import time
 # ドライバーのパスを通す
@@ -27,7 +32,16 @@ class Main:
     def driver_set(self):
         option = Options()  # オプションを用意
         option.add_argument('--headless')  # ヘッドレスモードの設定を付与
-        self.driver = webdriver.Chrome('chromedriver', options=option)
+        option.add_argument('--disable-logging')
+        option.add_argument('--log-level=3')
+        option.add_experimental_option('excludeSwitches', ['enable-logging'])
+
+        try:
+            driver_path = sys._MEIPASS + '/chromedriver'
+        except:
+            driver_path = os.path.dirname(__file__) + '/chromedriver'
+
+        self.driver = webdriver.Chrome(driver_path, options=option)
         self.driver.implicitly_wait(5)
 
     def into_web(self):
@@ -146,6 +160,10 @@ if __name__ == '__main__':
     start = time.time()
     print('csvへのパスを入力してください：', end='')
     csv_path = input()
+    try:
+        csv_path = sys._MEIPASS + '/' + csv_path
+    except:
+        csv_path = os.path.dirname(__file__) + csv_path
     csv_in = pd.read_csv(csv_path)
     csv_out = pd.DataFrame()
     for word, url in zip(tqdm.tqdm(csv_in['キーワード'].tolist()), csv_in['URL'].tolist()):
