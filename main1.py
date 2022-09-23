@@ -8,7 +8,8 @@ from time import sleep
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, ElementNotInteractableException
+from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException, \
+    ElementNotInteractableException
 import pandas as pd
 import tqdm
 import bs4
@@ -16,6 +17,7 @@ from bs4 import BeautifulSoup
 import time
 # ドライバーのパスを通す
 import chromedriver_binary
+from selenium.webdriver.chrome.service import Service
 
 
 class Main:
@@ -41,7 +43,8 @@ class Main:
         except:
             driver_path = os.path.dirname(__file__) + '/chromedriver'
 
-        self.driver = webdriver.Chrome(driver_path, options=option)
+        service = Service(executable_path=driver_path)
+        self.driver = webdriver.Chrome(service=service, options=option)
         self.driver.implicitly_wait(5)
 
     def into_web(self):
@@ -77,7 +80,6 @@ class Main:
             self.driver.implicitly_wait(5)
             self.get_data()
 
-
     def next_page(self, i):
         try:
             if i == 0:
@@ -92,7 +94,7 @@ class Main:
             self.driver.implicitly_wait(5)
             sleep(1)
             return True
-        except :
+        except:
             return False
 
     def get_data(self):
@@ -141,6 +143,7 @@ class Main:
 
 
 def main(word, url, csv_out):
+    print(f'{word}を検索しています...')
     test = Main(word, url)
     test.driver_set()
     test.into_web()
@@ -163,12 +166,13 @@ if __name__ == '__main__':
     try:
         csv_path = sys._MEIPASS + '/' + csv_path
     except:
-        csv_path = os.path.dirname(__file__) + csv_path
+        csv_path = os.path.dirname(__file__) + '/' + csv_path
     csv_in = pd.read_csv(csv_path)
     csv_out = pd.DataFrame()
-    for word, url in zip(tqdm.tqdm(csv_in['キーワード'].tolist()), csv_in['URL'].tolist()):
-        csv_out = main(word, url, csv_out)
+
+    for word, url in zip(csv_in['キーワード'].tolist(), csv_in['URL'].tolist()):
+        csv_out = main(str(word), url, csv_out)
     data_csv = csv_out.rename(
         columns={0: 'キーワード', 1: 'URL', 2: '検索数', 3: '一致数', 4: '平均価格', 5: 'URL'})
-    data_csv.to_csv(csv_path, index=False)
-    print(f'実行時間：{round(time.time()-start, 1)}s')
+    data_csv.to_csv(csv_path, index=False, encoding='shift-jis')
+    print(f'実行時間：{round(time.time() - start, 1)}s')
